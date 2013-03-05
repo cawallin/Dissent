@@ -9,6 +9,7 @@
 #include "Anonymity/NeffKeyShuffleRound.hpp"
 #include "Anonymity/NeffShuffleRound.hpp"
 #include "Anonymity/NullRound.hpp"
+#include "Anonymity/NullNonceRound.hpp"
 #include "Anonymity/RepeatingBulkRound.hpp"
 #include "Anonymity/Round.hpp"
 #include "Anonymity/RoundStateMachine.hpp"
