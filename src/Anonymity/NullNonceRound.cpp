@@ -1,5 +1,6 @@
 #include "Connections/Network.hpp"
 #include "Crypto/Hash.hpp"
+#include "Messaging/ISender.hpp"
 
 #include "NullNonceRound.hpp"
 
@@ -24,7 +25,7 @@ namespace Anonymity {
 
     _round = create_round(GetGroup(), GetPrivateIdentity(), sr_id, net,
         get_data);
-    _round->SetSink(&_round_sink);
+    _round->SetSink(this);
 
     QObject::connect(_round.data(), SIGNAL(Finished()),
         this, SLOT(RoundFinished()));
@@ -80,5 +81,16 @@ namespace Anonymity {
     Round::OnStop();
   }
 
+  void NullNonceRound::HandleData(const QSharedPointer<Dissent::Messaging::ISender> &from, const QByteArray
+                  &data)
+  {
+    qDebug() << "Calling handle data! hopefully this works!";
+    PushData(from, data);
+  }
+
+  const QObject* NullNonceRound::GetObject()
+  {
+    return this;
+  }
 }
 }

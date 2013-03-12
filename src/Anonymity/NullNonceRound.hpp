@@ -3,7 +3,8 @@
 
 #include <QSharedPointer>
 
-#include "Messaging/BufferSink.hpp"
+#include "Messaging/ISink.hpp"
+#include "Messaging/ISender.hpp"
 
 #include "BaseBulkRound.hpp"
 #include "Round.hpp"
@@ -15,11 +16,11 @@ namespace Anonymity {
   /**
    * A simple wrapper to a round.  Just calls the round that is passed in.
    */
-  class NullNonceRound : public Round {
+  class NullNonceRound : public Round, public Messaging::ISink {
     Q_OBJECT
 
     public:
-      typedef Messaging::BufferSink BufferSink;
+      typedef Messaging::ISender ISender;
 
       /**
        * Constructor
@@ -41,6 +42,15 @@ namespace Anonymity {
 
       inline virtual QString ToString() const { return "NullNonceRound " + GetRoundId().ToString(); }
 
+      /**
+       * Handle the data coming in from the round and just pass
+       * it out immediately
+       */
+      virtual void HandleData(const QSharedPointer<ISender> &from,
+                              const QByteArray &data);
+    
+      virtual const QObject* GetObject();
+
     protected:
       /**
        * Called when the NullNonceRound is started
@@ -60,6 +70,8 @@ namespace Anonymity {
        */
       virtual void IncomingData(const Request &notification);
 
+
+
     private:
       /**
        * Called when the shuffle finished
@@ -71,10 +83,6 @@ namespace Anonymity {
        */
       QSharedPointer<Round> _round;
       
-      /**
-       * Stores the results of the round.
-       */
-      BufferSink _round_sink;
     
     private slots:
       /**
