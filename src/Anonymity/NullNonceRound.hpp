@@ -7,6 +7,7 @@
 #include "Messaging/ISender.hpp"
 
 #include "BaseBulkRound.hpp"
+#include "ShuffleRound.hpp"
 #include "Round.hpp"
 
 namespace Dissent {
