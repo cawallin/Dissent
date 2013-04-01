@@ -9,7 +9,6 @@
 #include "Anonymity/NeffKeyShuffleRound.hpp"
 #include "Anonymity/NeffShuffleRound.hpp"
 #include "Anonymity/NullRound.hpp"
-#include "Anonymity/NullNonceRound.hpp"
 #include "Anonymity/RepeatingBulkRound.hpp"
 #include "Anonymity/Round.hpp"
 #include "Anonymity/RoundStateMachine.hpp"
@@ -19,6 +18,8 @@
 #include "Anonymity/ShuffleBlamer.hpp"
 #include "Anonymity/ShuffleRound.hpp"
 #include "Anonymity/ShuffleRoundBlame.hpp"
+#include "Anonymity/Nonce/NullNonceRound.hpp"
+#include "Anonymity/Nonce/NonceRound.hpp"
 
 #include "Applications/AuthFactory.hpp"
 #include "Applications/CommandLine.hpp"

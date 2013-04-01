@@ -3,17 +3,17 @@
 
 #include <QSharedPointer>
 
+#include "Anonymity/RoundStateMachine.hpp"
 #include "Connections/Network.hpp"
 
 #include "NullNonceRound.hpp"
-#include "RoundStateMachine.hpp"
 
 namespace Dissent {
 
 namespace Anonymity {
 
 namespace Nonce {
-  class ShuffleRound;
+//  class ShuffleRound;
   /**
    * A simple wrapper to a round.  Just calls the round that is passed in.
    */

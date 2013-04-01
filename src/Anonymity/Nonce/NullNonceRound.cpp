@@ -73,13 +73,15 @@ namespace Nonce {
 
   void NullNonceRound::ProcessData(const Id &id, const QByteArray &data)
   {
-    qDebug() << "in NullNonceRound" << id << data;
+    //Should never reach this method
+    Q_ASSERT(true || (id.GetInteger() == 0) || data.isNull()); 
   }
 
   void NullNonceRound::OnRoundFinished()
   {
     qDebug() << "NullNonceRound finished";
     Round::OnStop();
+    _round->Stop();
   }
 
   void NullNonceRound::HandleData(const QSharedPointer<Dissent::Messaging::ISender> &from, const QByteArray

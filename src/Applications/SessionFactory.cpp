@@ -5,7 +5,7 @@
 #include "Anonymity/RepeatingBulkRound.hpp"
 #include "Anonymity/NeffKeyShuffleRound.hpp"
 #include "Anonymity/NeffShuffleRound.hpp"
-#include "Anonymity/NullNonceRound.hpp"
+#include "Anonymity/Nonce/NullNonceRound.hpp"
 #include "Anonymity/NullRound.hpp"
 #include "Anonymity/Round.hpp"
 #include "Anonymity/Sessions/Session.hpp"
@@ -24,6 +24,7 @@
 
 using namespace Dissent::Anonymity;
 using namespace Dissent::Anonymity::Sessions;
+using namespace Dissent::Anonymity::Nonce;
 using Dissent::Connections::ConnectionManager;
 using Dissent::Connections::DefaultNetwork;
 using Dissent::Connections::Network;

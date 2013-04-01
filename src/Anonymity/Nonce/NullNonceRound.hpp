@@ -1,21 +1,14 @@
 #ifndef DISSENT_ANONYMITY_NULL_NONCE_ROUND_H_GUARD
 #define DISSENT_ANONYMITY_NULL_NONCE_ROUND_H_GUARD
 
-#include <QSharedPointer>
-
-#include "Messaging/ISink.hpp"
-#include "Messaging/ISender.hpp"
-
-#include "BaseBulkRound.hpp"
-#include "ShuffleRound.hpp"
-#include "Round.hpp"
+#include "Anonymity/BaseBulkRound.hpp"
+#include "Anonymity/ShuffleRound.hpp"
 
 namespace Dissent {
 
 namespace Anonymity {
   
 namespace Nonce {
-  class ShuffleRound;
   /**
    * A simple wrapper to a round.  Just calls the round that is passed in.
    */
