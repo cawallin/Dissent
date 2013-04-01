@@ -55,22 +55,22 @@ namespace Nonce {
 
   void NonceRound::InitServer()
   {
-    _state_machine.AddState(NONCE_GENERATION);
     _state_machine.AddState(SEND_HASH);
     _state_machine.AddState(WAITING_FOR_HASHES);
     _state_machine.AddState(SEND_N);
     _state_machine.AddState(WAITING_FOR_N);
-    _state_machine.AddState(COMBINE);
+    _state_machine.AddState(SEND_SIG);
+    _state_machine.AddState(WAITING_FOR_SIG);
     _state_machine.AddState(INNER_ROUND);
     _state_machine.AddState(FINISHED);
 
-    _state_machine.AddTransition(OFFLINE, NONCE_GENERATION);
-    _state_machine.AddTransition(NONCE_GENERATION, SEND_HASH);
+    _state_machine.AddTransition(OFFLINE, SEND_HASH);
     _state_machine.AddTransition(SEND_HASH, WAITING_FOR_HASHES);
     _state_machine.AddTransition(WAITING_FOR_HASHES, SEND_N);
     _state_machine.AddTransition(SEND_N, WAITING_FOR_N);
-    _state_machine.AddTransition(WAITING_FOR_N, COMBINE);
-    _state_machine.AddTransition(COMBINE, INNER_ROUND);
+    _state_machine.AddTransition(WAITING_FOR_N, SEND_SIG);
+    _state_machine.AddTransition(SEND_SIG, WAITING_FOR_SIG);
+    _state_machine.AddTransition(WAITING_FOR_SIG, INNER_ROUND);
     _state_machine.AddTransition(INNER_ROUND, FINISHED);
     
   }

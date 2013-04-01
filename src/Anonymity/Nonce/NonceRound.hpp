@@ -27,18 +27,18 @@ namespace Nonce {
 
       enum MessageType {
         MSG_NONCE_HASH = 0,
-        MSG_NONCE
+        MSG_NONCE,
+        MSG_SIG
       };
 
       enum States {
         OFFLINE = 0,
-        NONCE_GENERATION,
         SEND_HASH,
         WAITING_FOR_HASHES,
         SEND_N,
         WAITING_FOR_N,
-        COMBINE,
-        FINISHED_NONCE_SHUFFLE,
+        SEND_SIG,
+        WAITING_FOR_SIG,
         INNER_ROUND,
         FINISHED
       };
