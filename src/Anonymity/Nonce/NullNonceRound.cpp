@@ -7,6 +7,7 @@
 namespace Dissent {
 using Crypto::Hash;
 namespace Anonymity {
+namespace Nonce {
   NullNonceRound::NullNonceRound(const Group &group, 
       const PrivateIdentity &ident, const Id &round_id,
       QSharedPointer<Network> network, GetDataCallback &get_data,
@@ -92,5 +93,6 @@ namespace Anonymity {
   {
     return this;
   }
+}
 }
 }

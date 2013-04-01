@@ -7,6 +7,7 @@
 namespace Dissent {
 using Crypto::Hash;
 namespace Anonymity {
+namespace Nonce {
   NonceRound::NonceRound(const Group &group, 
       const PrivateIdentity &ident, const Id &round_id,
       QSharedPointer<Network> network, GetDataCallback &get_data,
@@ -73,5 +74,6 @@ namespace Anonymity {
     _state_machine.AddTransition(INNER_ROUND, FINISHED);
     
   }
+}
 }
 }

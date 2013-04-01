@@ -11,6 +11,8 @@
 namespace Dissent {
 
 namespace Anonymity {
+
+namespace Nonce {
   class ShuffleRound;
   /**
    * A simple wrapper to a round.  Just calls the round that is passed in.
@@ -130,5 +132,5 @@ namespace Anonymity {
 
 }
 }
-
+}
 #endif
