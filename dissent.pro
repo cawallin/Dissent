@@ -66,6 +66,7 @@ HEADERS += src/Dissent.hpp \
            src/Anonymity/FastNeffKeyShuffleRound.hpp \
            src/Anonymity/NeffShuffleRound.hpp \
            src/Anonymity/NullRound.hpp \
+           src/Anonymity/Nonce/BaseNonceRound.hpp \
            src/Anonymity/Nonce/NullNonceRound.hpp \
            src/Anonymity/Nonce/NonceRound.hpp \
            src/Anonymity/RepeatingBulkRound.hpp \
@@ -239,6 +240,7 @@ SOURCES += src/Anonymity/BaseBulkRound.cpp \
            src/Anonymity/FastNeffKeyShuffleRound.cpp \
            src/Anonymity/NeffShuffleRound.cpp \
            src/Anonymity/NullRound.cpp \
+           src/Anonymity/Nonce/BaseNonceRound.cpp \
            src/Anonymity/Nonce/NullNonceRound.cpp \
            src/Anonymity/Nonce/NonceRound.cpp \
            src/Anonymity/RepeatingBulkRound.cpp \

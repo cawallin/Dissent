@@ -12,13 +12,9 @@ namespace Nonce {
       const PrivateIdentity &ident, const Id &round_id,
       QSharedPointer<Network> network, GetDataCallback &get_data,
       CreateRound create_round) :
-    NullNonceRound(group, ident, round_id, network, get_data),
+    BaseNonceRound(group, ident, round_id, network, get_data),
     _state_machine(this)
   {
-    QVariantHash headers = GetNetwork()->GetHeaders();
-    headers["nonce"] = true;
-    GetNetwork()->SetHeaders(headers);
-
     _state_machine.AddState(OFFLINE);
     _state_machine.SetState(OFFLINE);
 
@@ -27,6 +23,7 @@ namespace Nonce {
     }
     
     QSharedPointer<Network> net(GetNetwork()->Clone());
+    QVariantHash headers = GetNetwork()->GetHeaders();
     headers["nonce"] = false;
     net->SetHeaders(headers);
 
@@ -39,12 +36,6 @@ namespace Nonce {
     QObject::connect(_round.data(), SIGNAL(Finished()),
         this, SLOT(RoundFinished()));
     
-  }
-
-  void NonceRound::OnStart()
-  {
-    Round::OnStart();
-    _round->Start();
   }
 
   void NonceRound::OnRoundFinished()

@@ -12,13 +12,10 @@ namespace Nonce {
       const PrivateIdentity &ident, const Id &round_id,
       QSharedPointer<Network> network, GetDataCallback &get_data,
       CreateRound create_round) :
-    Round(group, ident, round_id, network, get_data)
+    BaseNonceRound(group, ident, round_id, network, get_data)
   {
-    QVariantHash headers = GetNetwork()->GetHeaders();
-    headers["nonce"] = true;
-    GetNetwork()->SetHeaders(headers);
-
     QSharedPointer<Network> net(GetNetwork()->Clone());
+    QVariantHash headers = GetNetwork()->GetHeaders();
     headers["nonce"] = false;
     net->SetHeaders(headers);
 
@@ -31,39 +28,6 @@ namespace Nonce {
     QObject::connect(_round.data(), SIGNAL(Finished()),
         this, SLOT(RoundFinished()));
   }
-
-  void NullNonceRound::IncomingData(const Request &notification)
-  {
-    if(Stopped()) {
-      qWarning() << "Received a message on a closed session:" << ToString();
-      return;
-    }
-
-    QSharedPointer<Connections::IOverlaySender> sender =
-      notification.GetFrom().dynamicCast<Connections::IOverlaySender>();
-    if(!sender) {
-      qDebug() << ToString() << " received wayward message from: " <<
-        notification.GetFrom()->ToString();
-      return;
-    }
-
-    const Id &id = sender->GetRemoteId();
-    if(!GetGroup().Contains(id)) {
-      qDebug() << ToString() << " received wayward message from: " << 
-        notification.GetFrom()->ToString();
-      return;
-    }
-    
-    QVariantHash msg = notification.GetData().toHash();
-
-    qDebug() << "In incoming data! is it a nonce? " << msg.value("nonce", false).toBool();
-
-    if(msg.value("nonce", false).toBool()) {
-      ProcessData(id, msg.value("data").toByteArray());
-    } else {
-      _round->IncomingData(notification);
-    }
-  }
   
   void NullNonceRound::OnStart()
   {
@@ -73,7 +37,8 @@ namespace Nonce {
 
   void NullNonceRound::ProcessData(const Id &id, const QByteArray &data)
   {
-    //Should never reach this method
+    // Should never reach this method, because NullNonceRound does not 
+    // send any messages of its own. 
     Q_ASSERT(true || (id.GetInteger() == 0) || data.isNull()); 
   }
 
@@ -81,19 +46,6 @@ namespace Nonce {
   {
     qDebug() << "NullNonceRound finished";
     Round::OnStop();
-    _round->Stop();
-  }
-
-  void NullNonceRound::HandleData(const QSharedPointer<Dissent::Messaging::ISender> &from, const QByteArray
-                  &data)
-  {
-    qDebug() << "Calling handle data! hopefully this works!";
-    PushData(from, data);
-  }
-
-  const QObject* NullNonceRound::GetObject()
-  {
-    return this;
   }
 }
 }

@@ -1,8 +1,7 @@
 #ifndef DISSENT_ANONYMITY_NULL_NONCE_ROUND_H_GUARD
 #define DISSENT_ANONYMITY_NULL_NONCE_ROUND_H_GUARD
 
-#include "Anonymity/BaseBulkRound.hpp"
-#include "Anonymity/ShuffleRound.hpp"
+#include "BaseNonceRound.hpp"
 
 namespace Dissent {
 
@@ -12,12 +11,10 @@ namespace Nonce {
   /**
    * A simple wrapper to a round.  Just calls the round that is passed in.
    */
-  class NullNonceRound : public Round, public Messaging::ISink {
+  class NullNonceRound : public BaseNonceRound {
     Q_OBJECT
 
     public:
-      typedef Messaging::ISender ISender;
-
       /**
        * Constructor
        * @param group Group used during this round
@@ -38,15 +35,6 @@ namespace Nonce {
 
       inline virtual QString ToString() const { return "NullNonceRound " + GetRoundId().ToString(); }
 
-      /**
-       * Handle the data coming in from the round and just pass
-       * it out immediately
-       */
-      virtual void HandleData(const QSharedPointer<ISender> &from,
-                              const QByteArray &data);
-    
-      virtual const QObject* GetObject();
-
     protected:
       /**
        * Called when the NullNonceRound is started
@@ -59,59 +47,13 @@ namespace Nonce {
        * @param id the source of the data
        */
       virtual void ProcessData(const Id &id, const QByteArray &data);
-  
-      /**
-       * Handle a data message from a remote peer
-       * @param notification message from a remote peer
-       */
-      virtual void IncomingData(const Request &notification);
-
-
 
     private:
       /**
        * Called when the shuffle finished
        */
       virtual void OnRoundFinished();
-      
-      /**
-       * Holds the round nested inside this round.
-       */
-      QSharedPointer<Round> _round;
-      
-    
-    private slots:
-      /**
-       * Called when the descriptor shuffle ends
-       */
-      void RoundFinished() { OnRoundFinished(); }
   };
-
-  template <typename N, typename B, typename S> QSharedPointer<Round> 
-          TCreateBulkNonceRound(
-      const Round::Group &group, const Round::PrivateIdentity &ident,
-      const Connections::Id &round_id,
-      QSharedPointer<Connections::Network> network,
-      Messaging::GetDataCallback &get_data)
-  {
-    QSharedPointer<Round> round(new N(group, ident, round_id, network,
-          get_data, &TCreateBulkRound<B, S>));
-    round->SetSharedPointer(round);
-    return round;
-  }
-  
-  template <typename N, typename R> QSharedPointer<Round> 
-          TCreateNonceRound(
-      const Round::Group &group, const Round::PrivateIdentity &ident,
-      const Connections::Id &round_id,
-      QSharedPointer<Connections::Network> network,
-      Messaging::GetDataCallback &get_data)
-  {
-    QSharedPointer<Round> round(new N(group, ident, round_id, network,
-          get_data, &TCreateRound<R>));
-    round->SetSharedPointer(round);
-    return round;
-  }
 }
 }
 }

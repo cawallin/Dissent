@@ -18,6 +18,7 @@
 #include "Anonymity/ShuffleBlamer.hpp"
 #include "Anonymity/ShuffleRound.hpp"
 #include "Anonymity/ShuffleRoundBlame.hpp"
+#include "Anonymity/Nonce/BaseNonceRound.hpp"
 #include "Anonymity/Nonce/NullNonceRound.hpp"
 #include "Anonymity/Nonce/NonceRound.hpp"
 

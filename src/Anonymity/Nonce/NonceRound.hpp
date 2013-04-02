@@ -1,12 +1,9 @@
 #ifndef DISSENT_ANONYMITY_NONCE_ROUND_H_GUARD
 #define DISSENT_ANONYMITY_NONCE_ROUND_H_GUARD
 
-#include <QSharedPointer>
-
 #include "Anonymity/RoundStateMachine.hpp"
-#include "Connections/Network.hpp"
 
-#include "NullNonceRound.hpp"
+#include "BaseNonceRound.hpp"
 
 namespace Dissent {
 
@@ -17,7 +14,7 @@ namespace Nonce {
   /**
    * A simple wrapper to a round.  Just calls the round that is passed in.
    */
-  class NonceRound : public NullNonceRound {
+  class NonceRound : public BaseNonceRound {
     Q_OBJECT
 
     Q_ENUMS(States);
@@ -86,11 +83,6 @@ namespace Nonce {
     
     protected:
       /**
-       * Called when the NonceRound is started
-       */
-      virtual void OnStart();
-
-      /**
        * Funnels data into the RoundStateMachine for evaluation
        * @param data Incoming data
        * @param from the remote peer sending the data
@@ -99,14 +91,7 @@ namespace Nonce {
       {
         _state_machine.ProcessData(id, data);
       }
-  
-      void BeforeStateTransition() {}
-      bool CycleComplete() { return false; }
-      void EmptyHandleMessage(const Id &, QDataStream &) {}
-      void EmptyTransitionCallback() {}
-
-      void VerifiableBroadcastToServers(const QByteArray &data);
-      void VerifiableBroadcastToClients(const QByteArray &data);
+    
     private:
       /**
        * Called when the shuffle finished
@@ -114,20 +99,35 @@ namespace Nonce {
       virtual void OnRoundFinished();
       
       void InitServer();
-      void InitClient();
       /**
        * Holds the round nested inside this round.
        */
-      QSharedPointer<Round> _round;
+      
+      /**
+       * Called before each state transition
+       */
+      void BeforeStateTransition() {}
+
+      /**
+       * Called after each cycle, i.e., phase conclusion
+       */
+      bool CycleComplete() {return false;}
+      
+      /**
+       * Safety net, should never be called
+       */
+      void EmptyHandleMessage(const Id &, QDataStream &)
+      {
+        qDebug() << "Received a message into the empty handle message...";
+      }
+        
+      /**
+       * Some transitions don't require any state preparation, they are handled
+       * by this
+       */
+      void EmptyTransitionCallback() {}
       
       RoundStateMachine<NonceRound> _state_machine;
-      
-    
-    private slots:
-      /**
-       * Called when the descriptor shuffle ends
-       */
-      void RoundFinished() { OnRoundFinished(); }
   };
 
 }
