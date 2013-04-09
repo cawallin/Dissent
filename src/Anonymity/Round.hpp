@@ -134,7 +134,9 @@ namespace Anonymity {
       /**
        * Round interrupted, leader should interrupt others.
        */
-      void SetInterrupted() { _interrupted = true; }
+      void SetInterrupted() { _interrupted = true; HandleInterrupted();}
+
+      virtual void HandleInterrupted() {}
 
       inline QSharedPointer<Round> GetSharedPointer()
       {

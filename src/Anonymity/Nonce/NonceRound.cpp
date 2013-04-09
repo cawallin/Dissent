@@ -35,6 +35,7 @@ namespace Nonce {
   {
     qDebug() << "NonceRound finished";
     _state_machine.StateComplete();
+    setSuccessful(_round->Successful() && Successful());
     Round::OnStop();
   }
 

@@ -80,6 +80,7 @@ namespace Nonce {
 
       inline virtual QString ToString() const { return "NonceRound " + GetRoundId().ToString(); }
 
+      virtual void HandleInterrupted() {_round->SetInterrupted();}
     
     protected:
       /**
