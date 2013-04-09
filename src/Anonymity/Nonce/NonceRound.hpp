@@ -91,18 +91,34 @@ namespace Nonce {
       {
         _state_machine.ProcessData(id, data);
       }
-    
+   
+      class State {
+        public:
+          int my_contrib;
+          int complete_nonce;
+          CreateRound create_round;
+          GetDataCallback &data_cb;
+          QVector<QByteArray> receivedH;
+          QVector<QByteArray> receivedN;
+          int n_msgs;
+          QSet<Id> handled_servers;
+          QHash<int, QByteArray> signatures;
+      };
+
     private:
       /**
        * Called when the shuffle finished
        */
       virtual void OnRoundFinished();
       
-      void InitServer();
-      /**
-       * Holds the round nested inside this round.
-       */
+      void InitServer(CreateRound create_round, GetDataCallback &data_cb);
       
+      void VerifiableBroadcastToServers(const QByteArray &data);
+
+      void GenerateMyContrib();
+
+      void Xor(QByteArray &dst, const QByteArray &t1, const QByteArray &t2);
+
       /**
        * Called before each state transition
        */
@@ -126,7 +142,16 @@ namespace Nonce {
        * by this
        */
       void EmptyTransitionCallback() {}
-      
+     
+      void StartInnerRound();
+      void SendHash();
+      void ReceiveHashes(const Id &id, QDataStream &stream);
+      void SendN();
+      void ReceiveNs(const Id &id, QDataStream &stream);
+      void SendSig();
+      void ReceiveSig(const Id &id, QDataStream &stream);
+
+      QSharedPointer<State> _state;
       RoundStateMachine<NonceRound> _state_machine;
   };
 
