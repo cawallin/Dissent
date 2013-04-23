@@ -225,7 +225,6 @@ namespace Nonce {
 
     _state->handled_servers.insert(from);
     _state->signatures[from] = signature;
-    //_state->signatures[GetGroup().GetSubgroup().GetIndex(from)] = signature;
 
     qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
       ": received validation from" << GetGroup().GetIndex(from) <<
@@ -258,19 +257,22 @@ namespace Nonce {
     QHash<Id, QByteArray> signatures;
     stream >> signatures;
     
-   /* 
+    
     QHashIterator<Id, QByteArray> it(signatures);
     while (it.hasNext())
     {
       it.next();
       Id id = it.key();
       QByteArray signature = it.value();
-      qDebug() << "signature in prepare inner round is " << signature;
-      if(!GetGroup().GetKey(id)->Verify(_state->complete_nonce, signature))
+      qDebug() << "signature in prepare inner round is " << id << " "<< 
+          signature;
+      if(id != GetLocalId() &&
+          !GetGroup().GetKey(id)->Verify(complete_nonce, signature))
       {
-        throw QRunTimeError("Signature doesn't match.");
+        throw QRunTimeError("Signature doesn't match. ID: " + id.ToString() + 
+            " Signature: " + signature);
       }
-    }*/
+    }
 
     if (_state->handled_prepares.size() > 0 && 
           complete_nonce != _state->complete_nonce)
