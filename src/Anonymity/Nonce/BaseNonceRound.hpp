@@ -14,10 +14,7 @@ namespace Nonce {
    */
   class BaseNonceRound : public Round, public Messaging::ISink {
     Q_OBJECT
-
     public:
-      typedef Messaging::ISender ISender;
-
       /**
        * Constructor
        * @param group Group used during this round
@@ -43,30 +40,29 @@ namespace Nonce {
        */
       virtual void HandleData(const QSharedPointer<ISender> &from,
                               const QByteArray &data);
-    
+   
+
       virtual const QObject* GetObject();
 
-    protected:
-      /**
-       * Handle a data message from a remote peer; if the message
-       * has a key "nonce" that is true, the message goes to the
-       * ProcessData of the NonceRound, else the message goes to
-       * the inner round.
-       * @param notification message from a remote peer
-       */
+      virtual void SetInterrupted();
+
       virtual void IncomingData(const Request &notification);
+
+    protected:
       
+      /**
+       * Called when the inner round finishes
+       */
+      virtual void OnRoundFinished();
+      
+      virtual void OnStop();
+
+     
       /**
        * Holds the round nested inside this round.
        */
       QSharedPointer<Round> _round;
-   
-   private:
-      /**
-       * Called when the inner round finishes
-       */
-      virtual void OnRoundFinished() = 0;
-      
+      QVector<Request> _pending_round_messages; 
     private slots:
       /**
        * Called when the descriptor shuffle ends

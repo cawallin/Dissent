@@ -18,7 +18,7 @@ namespace Nonce {
     QVariantHash headers = GetNetwork()->GetHeaders();
     headers["nonce"] = false;
     net->SetHeaders(headers);
-
+    
     Id sr_id(Hash().ComputeHash(GetRoundId().GetByteArray()));
 
     _round = create_round(GetGroup(), GetPrivateIdentity(), sr_id, net,
@@ -35,16 +35,10 @@ namespace Nonce {
     _round->Start();
   }
 
-  void NullNonceRound::ProcessData(const Id &id, const QByteArray &data)
-  {
-    // Should never reach this method, because NullNonceRound does not 
-    // send any messages of its own. 
-    Q_ASSERT(true || (id.GetInteger() == 0) || data.isNull()); 
-  }
-
   void NullNonceRound::OnRoundFinished()
   {
-    qDebug() << "NullNonceRound finished";
+    BaseNonceRound::OnRoundFinished();
+    qDebug() << "NullNonceRound finished.  Inner round exited.";
     Round::OnStop();
   }
 }

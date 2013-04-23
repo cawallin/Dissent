@@ -134,9 +134,7 @@ namespace Anonymity {
       /**
        * Round interrupted, leader should interrupt others.
        */
-      void SetInterrupted() { _interrupted = true; HandleInterrupted();}
-
-      virtual void HandleInterrupted() {}
+      virtual void SetInterrupted() {_interrupted = true;}
 
       inline QSharedPointer<Round> GetSharedPointer()
       {
@@ -278,6 +276,7 @@ namespace Anonymity {
        */
       QByteArray GenerateData(int size = DEFAULT_GENERATE_DATA_SIZE);
 
+    
     private:
       QDateTime _create_time;
       QDateTime _start_time;
@@ -287,8 +286,8 @@ namespace Anonymity {
       QSharedPointer<Network> _network;
       GetDataCallback &_get_data_cb;
       bool _successful;
-      QVector<int> _empty_list;
       bool _interrupted;
+      QVector<int> _empty_list;
       QWeakPointer<Round> _shared;
   };
 

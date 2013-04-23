@@ -61,6 +61,7 @@ HEADERS += src/Dissent.hpp \
            src/Anonymity/BlogDropRound.hpp \
            src/Anonymity/BulkRound.hpp \
            src/Anonymity/CSBulkRound.hpp \
+           src/Anonymity/EmptyRound.hpp \
            src/Anonymity/Log.hpp \
            src/Anonymity/NeffKeyShuffleRound.hpp \
            src/Anonymity/FastNeffKeyShuffleRound.hpp \
@@ -236,6 +237,7 @@ SOURCES += src/Anonymity/BaseBulkRound.cpp \
            src/Anonymity/BlogDropRound.cpp \
            src/Anonymity/BulkRound.cpp \
            src/Anonymity/CSBulkRound.cpp \
+           src/Anonymity/EmptyRound.cpp \
            src/Anonymity/Log.cpp \
            src/Anonymity/FastNeffKeyShuffleRound.cpp \
            src/Anonymity/NeffShuffleRound.cpp \

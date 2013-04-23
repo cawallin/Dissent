@@ -23,40 +23,57 @@ namespace Nonce {
   {
     _state_machine.AddState(OFFLINE);
     _state_machine.SetState(OFFLINE);
-
-    //_state = QSharedPointer<State>(new State());
+    _state_machine.AddState(PREPARE_INNER_ROUND, PREPARE_IR_MSG, 
+        &NonceRound::PrepareInnerRound);
+    _state_machine.AddState(INNER_ROUND, -1, 0, &NonceRound::StartInnerRound);
+    _state_machine.AddState(FINISHED, -1, 0, &NonceRound::OnFinished);
     
-    if(group.GetSubgroup().Contains(ident.GetLocalId())) {
-      InitServer(create_round, get_data);
+    _state_machine.AddTransition(PREPARE_INNER_ROUND, INNER_ROUND);
+    _state_machine.AddTransition(INNER_ROUND, FINISHED);
+
+    _state = QSharedPointer<State>(new State(create_round, get_data, 
+        GetGroup().GetSubgroup().Count()));
+    
+    if(GetGroup().GetSubgroup().Contains(ident.GetLocalId())) {
+      InitServer();
+    }
+    else {
+      _state_machine.AddTransition(OFFLINE, PREPARE_INNER_ROUND);
     }
   }
 
   void NonceRound::OnRoundFinished()
   {
-    qDebug() << "NonceRound finished";
+    SetSuccessful(true);
+    BaseNonceRound::OnRoundFinished();
     _state_machine.StateComplete();
-    setSuccessful(_round->Successful() && Successful());
+    qDebug() << "NonceRound finished";
+  }
+
+  void NonceRound::OnStart()
+  {
+    Round::OnStart();
+    _state_machine.StateComplete();
+  }
+
+  void NonceRound::OnFinished()
+  {
+    qDebug() << "In OnFinished";
     Round::OnStop();
   }
 
-  void NonceRound::InitServer(CreateRound create_round, GetDataCallback 
-    &data_cb)
+  void NonceRound::InitServer()
   {
-    _state->create_round = create_round;
-    _state->data_cb = data_cb;
-
+    _state->n_msgs = 0;
     GenerateMyContrib();
 
     _state_machine.AddState(SEND_HASH, -1, 0, &NonceRound::SendHash);
-    _state_machine.AddState(WAITING_FOR_HASHES, -1, 
+    _state_machine.AddState(WAITING_FOR_HASHES, MSG_NONCE_HASH, 
         &NonceRound::ReceiveHashes);
     _state_machine.AddState(SEND_N, -1, 0, &NonceRound::SendN);
-    _state_machine.AddState(WAITING_FOR_N, -1, &NonceRound::ReceiveNs);
+    _state_machine.AddState(WAITING_FOR_N, MSG_NONCE, &NonceRound::ReceiveNs);
     _state_machine.AddState(SEND_SIG, -1, 0, &NonceRound::SendSig);
-    _state_machine.AddState(WAITING_FOR_SIG, -1, &NonceRound::ReceiveSig);
-    _state_machine.AddState(INNER_ROUND, -1, 0, 
-        &NonceRound::StartInnerRound);
-    _state_machine.AddState(FINISHED);
+    _state_machine.AddState(WAITING_FOR_SIG, MSG_SIG, &NonceRound::ReceiveSig);
 
     _state_machine.AddTransition(OFFLINE, SEND_HASH);
     _state_machine.AddTransition(SEND_HASH, WAITING_FOR_HASHES);
@@ -64,25 +81,41 @@ namespace Nonce {
     _state_machine.AddTransition(SEND_N, WAITING_FOR_N);
     _state_machine.AddTransition(WAITING_FOR_N, SEND_SIG);
     _state_machine.AddTransition(SEND_SIG, WAITING_FOR_SIG);
-    _state_machine.AddTransition(WAITING_FOR_SIG, INNER_ROUND);
-    _state_machine.AddTransition(INNER_ROUND, FINISHED);
+    _state_machine.AddTransition(WAITING_FOR_SIG, PREPARE_INNER_ROUND);
   }
 
   void NonceRound::GenerateMyContrib()
   {
-    _state->my_contrib = CryptoRandom().GetInt();
+    _state->my_contrib = QByteArray::number(CryptoRandom().GetInt());
+    _state->complete_nonce = QByteArray().fill('0', 64);   
+    qDebug() << "Generating my contribution: " << _state->my_contrib;
   }
 
   void NonceRound::SendHash()
   {
-    VerifiableBroadcastToServers(Hash().ComputeHash(
-      QByteArray::number(_state->my_contrib)));
+    QByteArray hash = Hash().ComputeHash(_state->my_contrib);
+
+    qDebug() << "Sending hash" << hash.toBase64();
+    
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream << MSG_NONCE_HASH << GetRoundId() << hash;
+    
+    VerifiableBroadcastToServers(payload);
     _state_machine.StateComplete();
   }
 
   void NonceRound::SendN()
   {
-    VerifiableBroadcastToServers(QByteArray::number(_state->my_contrib));
+    qDebug() << "Sending N";
+
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream << MSG_NONCE << GetRoundId() << _state->my_contrib;
+   
+    qDebug() << "N that is being sent: " << payload.toHex();
+
+    VerifiableBroadcastToServers(payload);
     _state_machine.StateComplete();
   }
 
@@ -108,11 +141,12 @@ namespace Nonce {
 
     qDebug() << GetLocalId().ToString() << "received" << _state->n_msgs << "expecting" << GetGroup().GetSubgroup().Count();
 
+    qDebug() << "Receiving hash" << data.toBase64();
     if(_state->n_msgs != GetGroup().GetSubgroup().Count()) {
       return;
     }
-    _state_machine.StateComplete();
     _state->n_msgs = 0;
+    _state_machine.StateComplete();
   }
 
   void NonceRound::ReceiveNs(const Id &id, QDataStream &stream)
@@ -132,9 +166,8 @@ namespace Nonce {
       qDebug() << GetLocalId().ToString() << "received a real message from" <<
         id.ToString();
     }
-
-    if (Hash().ComputeHash(_state->receivedH[idx]) != 
-       Hash().ComputeHash(data))
+    
+    if (_state->receivedH[idx] !=  Hash().ComputeHash(data))
     {
       qWarning() << "Hash does not match the value sent";
       return;
@@ -143,51 +176,56 @@ namespace Nonce {
     _state->receivedN[idx] = data;
     _state->n_msgs++;
 
-    QByteArray complete_array;
-    Xor(complete_array, data, QByteArray::number(_state->complete_nonce));
-
-    _state->complete_nonce = complete_array.toInt();
+    Xor(_state->complete_nonce, data, _state->complete_nonce);
+    
+    qDebug() << "Complete nonce: " << _state->complete_nonce << "data: " << data;
 
     qDebug() << GetLocalId().ToString() << "received" << _state->n_msgs << "expecting" << GetGroup().GetSubgroup().Count();
 
     if(_state->n_msgs != GetGroup().GetSubgroup().Count()) {
       return;
     }
-    _state_machine.StateComplete();
+
+    qDebug() << "Complete nonce: " << _state->complete_nonce;
+
     _state->n_msgs = 0;
+    _state_machine.StateComplete();
   }
 
   void NonceRound::SendSig()
   {
+    qDebug() << "Sending signature";
     QByteArray signature = GetPrivateIdentity().GetSigningKey()->
-        Sign(QByteArray::number(_state->complete_nonce)); 
+        Sign(_state->complete_nonce); 
     
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
-    stream << MSG_SIG << GetRoundId() << _state_machine.GetPhase()
-        << signature;
+    stream << MSG_SIG << GetRoundId()  << signature;
+
+    qDebug() << "Original signature to send" << Hash().ComputeHash(payload);
 
     VerifiableBroadcastToServers(payload);
+      _state_machine.StateComplete();
   }
 
   void NonceRound::ReceiveSig(const Id &from, QDataStream &stream)
   {
-  
     if(_state->handled_servers.contains(from)) {
       throw QRunTimeError("Already have signature.");
     }
 
     QByteArray signature;
     stream >> signature;
-
-    if(!GetGroup().GetSubgroup().GetKey(from)->
-        Verify(QByteArray::number(_state->complete_nonce), signature))
+    qDebug() << "signature: " << signature;
+    
+    if(!GetGroup().GetKey(from)->Verify(_state->complete_nonce, signature))
     {
       throw QRunTimeError("Signature doesn't match.");
     }
 
     _state->handled_servers.insert(from);
-    _state->signatures[GetGroup().GetSubgroup().GetIndex(from)] = signature;
+    _state->signatures[from] = signature;
+    //_state->signatures[GetGroup().GetSubgroup().GetIndex(from)] = signature;
 
     qDebug() << GetGroup().GetIndex(GetLocalId()) << GetLocalId().ToString() <<
       ": received validation from" << GetGroup().GetIndex(from) <<
@@ -195,6 +233,55 @@ namespace Nonce {
       << "expecting" << GetGroup().GetSubgroup().Count();
 
     if(_state->handled_servers.count() == 
+            GetGroup().GetSubgroup().Count()) 
+    {
+      
+      QByteArray payload;
+      QDataStream stream(&payload, QIODevice::WriteOnly);
+      stream << PREPARE_IR_MSG << GetRoundId()  << _state->complete_nonce <<
+          _state->signatures;
+      
+      VerifiableBroadcast(payload);
+      _state_machine.StateComplete();
+    }
+  }
+
+  void NonceRound::PrepareInnerRound(const Id &from, QDataStream &stream)
+  {
+    if(_state->handled_prepares.contains(from)) {
+      throw QRunTimeError("Already have signature.");
+    }
+
+    QByteArray complete_nonce;
+    stream >> complete_nonce;
+    
+    QHash<Id, QByteArray> signatures;
+    stream >> signatures;
+    
+   /* 
+    QHashIterator<Id, QByteArray> it(signatures);
+    while (it.hasNext())
+    {
+      it.next();
+      Id id = it.key();
+      QByteArray signature = it.value();
+      qDebug() << "signature in prepare inner round is " << signature;
+      if(!GetGroup().GetKey(id)->Verify(_state->complete_nonce, signature))
+      {
+        throw QRunTimeError("Signature doesn't match.");
+      }
+    }*/
+
+    if (_state->handled_prepares.size() > 0 && 
+          complete_nonce != _state->complete_nonce)
+    {
+      throw QRunTimeError("Received an incorrect nonce.");
+    }
+
+    _state->complete_nonce = complete_nonce;
+    _state->handled_prepares.insert(from);
+    
+    if(_state->handled_prepares.count() == 
             GetGroup().GetSubgroup().Count()) 
     {
       _state_machine.StateComplete();
@@ -208,22 +295,41 @@ namespace Nonce {
     headers["nonce"] = false;
     net->SetHeaders(headers);
 
-    Id sr_id(QByteArray::number(_state->complete_nonce));
+    Id sr_id(_state->complete_nonce);
 
-    _round = _state->create_round(GetGroup(), GetPrivateIdentity(), sr_id, net,
-        _state->data_cb);
+    _round = _state->create_round(GetGroup(), GetPrivateIdentity(), 
+        sr_id, net, _state->data_cb);
     _round->SetSink(this);
   
     QObject::connect(_round.data(), SIGNAL(Finished()),
         this, SLOT(RoundFinished()));
+    
+    _round->Start();
+    qDebug() << "Starting inner round. Pending messages: " << 
+      _pending_round_messages.size();
+    foreach(const Request &request, _pending_round_messages){
+      _round->IncomingData(request);
+      qDebug() << "serving request!";
+    }
+    _pending_round_messages.clear();
   }
-
+  
   void NonceRound::VerifiableBroadcastToServers(const QByteArray &data)
   {
    // Q_ASSERT(IsServer());
 
-    QByteArray msg = data; //+ GetSigningKey()->Sign(data);
+    QByteArray msg = data + GetSigningKey()->Sign(data);
     foreach(const PublicIdentity &pi, GetGroup().GetSubgroup()) {
+      GetNetwork()->Send(pi.GetId(), msg);
+    }
+  }
+  
+  void NonceRound::VerifiableBroadcast(const QByteArray &data)
+  {
+   // Q_ASSERT(IsServer());
+
+    QByteArray msg = data + GetSigningKey()->Sign(data);
+    foreach(const PublicIdentity &pi, GetGroup()) {
       GetNetwork()->Send(pi.GetId(), msg);
     }
   }

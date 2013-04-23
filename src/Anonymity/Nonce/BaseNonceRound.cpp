@@ -18,13 +18,29 @@ namespace Nonce {
     GetNetwork()->SetHeaders(headers);
   }
 
+  void BaseNonceRound::SetInterrupted()
+  {
+    Round::SetInterrupted();
+    if (!_round.isNull()) {
+      _round->SetInterrupted();
+    }
+  }
+
+  void BaseNonceRound::OnStop()
+  {
+    if (!_round.isNull() && !_round.data()->Stopped()) {
+      _round->Stop();
+    }
+    Round::OnStop();
+  }
+  
   void BaseNonceRound::IncomingData(const Request &notification)
   {
     if(Stopped()) {
       qWarning() << "Received a message on a closed session:" << ToString();
       return;
     }
-
+      
     QSharedPointer<Connections::IOverlaySender> sender =
       notification.GetFrom().dynamicCast<Connections::IOverlaySender>();
     if(!sender) {
@@ -39,14 +55,25 @@ namespace Nonce {
         notification.GetFrom()->ToString();
       return;
     }
-    
+
     QVariantHash msg = notification.GetData().toHash();
 
-    if(msg.value("nonce", false).toBool()) {
+    bool nonce = msg.value("nonce").toBool();
+    if(nonce) {
       ProcessData(id, msg.value("data").toByteArray());
     } else {
-      _round->IncomingData(notification);
+      if (_round) {
+        _round->IncomingData(notification);
+      }
+      else {
+        _pending_round_messages.append(notification);
+      }
     }
+  }
+
+  void BaseNonceRound::OnRoundFinished()
+  {
+    SetSuccessful(_round->Successful() && Successful());
   }
   
   void BaseNonceRound::HandleData(const QSharedPointer<Dissent::Messaging::ISender> &from, const QByteArray
@@ -59,6 +86,7 @@ namespace Nonce {
   {
     return this;
   }
+  
 }
 }
 }

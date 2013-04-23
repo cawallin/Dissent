@@ -20,12 +20,14 @@ namespace Nonce {
     Q_ENUMS(States);
     Q_ENUMS(MessageType);
     public:
+      typedef Messaging::ISender ISender;
       friend class RoundStateMachine<NonceRound>;
 
       enum MessageType {
         MSG_NONCE_HASH = 0,
         MSG_NONCE,
-        MSG_SIG
+        MSG_SIG,
+        PREPARE_IR_MSG
       };
 
       enum States {
@@ -36,6 +38,7 @@ namespace Nonce {
         WAITING_FOR_N,
         SEND_SIG,
         WAITING_FOR_SIG,
+        PREPARE_INNER_ROUND,
         INNER_ROUND,
         FINISHED
       };
@@ -59,7 +62,6 @@ namespace Nonce {
         int index = staticMetaObject.indexOfEnumerator("MessageType");
         return staticMetaObject.enumerator(index).valueToKey(mt);
       }
-
       /**
        * Constructor
        * @param group Group used during this round
@@ -80,8 +82,6 @@ namespace Nonce {
 
       inline virtual QString ToString() const { return "NonceRound " + GetRoundId().ToString(); }
 
-      virtual void HandleInterrupted() {_round->SetInterrupted();}
-    
     protected:
       /**
        * Funnels data into the RoundStateMachine for evaluation
@@ -92,19 +92,27 @@ namespace Nonce {
       {
         _state_machine.ProcessData(id, data);
       }
-   
+      
       class State {
         public:
-          int my_contrib;
-          int complete_nonce;
+          State(CreateRound cr, GetDataCallback &d_cb, int group_count) : 
+            create_round(cr), data_cb(d_cb), receivedH(group_count),
+            receivedN(group_count) {}
+          virtual ~State() {}
+          
+          QByteArray my_contrib;
+          QByteArray complete_nonce;
           CreateRound create_round;
           GetDataCallback &data_cb;
           QVector<QByteArray> receivedH;
           QVector<QByteArray> receivedN;
           int n_msgs;
           QSet<Id> handled_servers;
-          QHash<int, QByteArray> signatures;
+          QSet<Id> handled_prepares;
+          QHash<Id, QByteArray> signatures;
       };
+
+      virtual void OnStart();
 
     private:
       /**
@@ -112,14 +120,26 @@ namespace Nonce {
        */
       virtual void OnRoundFinished();
       
-      void InitServer(CreateRound create_round, GetDataCallback &data_cb);
+      void InitServer();
       
       void VerifiableBroadcastToServers(const QByteArray &data);
+      void VerifiableBroadcast(const QByteArray &data);
 
       void GenerateMyContrib();
 
       void Xor(QByteArray &dst, const QByteArray &t1, const QByteArray &t2);
 
+      void PrepareInnerRound(const Id &id, QDataStream &stream);
+      void StartInnerRound();
+      void SendHash();
+      void ReceiveHashes(const Id &id, QDataStream &stream);
+      void SendN();
+      void ReceiveNs(const Id &id, QDataStream &stream);
+      void SendSig();
+      void ReceiveSig(const Id &id, QDataStream &stream);
+      void OnFinished();
+
+      /** Needed for RoundStateMachine**/
       /**
        * Called before each state transition
        */
@@ -143,14 +163,6 @@ namespace Nonce {
        * by this
        */
       void EmptyTransitionCallback() {}
-     
-      void StartInnerRound();
-      void SendHash();
-      void ReceiveHashes(const Id &id, QDataStream &stream);
-      void SendN();
-      void ReceiveNs(const Id &id, QDataStream &stream);
-      void SendSig();
-      void ReceiveSig(const Id &id, QDataStream &stream);
 
       QSharedPointer<State> _state;
       RoundStateMachine<NonceRound> _state_machine;
