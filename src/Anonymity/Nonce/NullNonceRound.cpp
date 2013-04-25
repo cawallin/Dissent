@@ -32,7 +32,14 @@ namespace Nonce {
   void NullNonceRound::OnStart()
   {
     Round::OnStart();
-    _round->Start();
+    RunInnerRound();
+  }
+
+  void NullNonceRound::ProcessData(const Id &id, const QByteArray &data)
+  {
+    qDebug() << "Should not be in Process Data of a " <<
+      "NullNonceRound" << id << data;
+    Q_ASSERT(true);
   }
 
   void NullNonceRound::OnRoundFinished()

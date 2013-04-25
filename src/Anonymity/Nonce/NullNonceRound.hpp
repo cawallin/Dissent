@@ -41,6 +41,14 @@ namespace Nonce {
        */
       virtual void OnStart();
 
+      /**
+       * Pushes the data into the subscribed Sink.
+       * @param data the data to push
+       * @param id the source of the data
+       */
+      virtual void ProcessData(const Id &id, const QByteArray &data);
+
+
     private:
       /**
        * Called when the shuffle finished

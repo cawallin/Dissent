@@ -305,15 +305,8 @@ namespace Nonce {
   
     QObject::connect(_round.data(), SIGNAL(Finished()),
         this, SLOT(RoundFinished()));
-    
-    _round->Start();
-    qDebug() << "Starting inner round. Pending messages: " << 
-      _pending_round_messages.size();
-    foreach(const Request &request, _pending_round_messages){
-      _round->IncomingData(request);
-      qDebug() << "serving request!";
-    }
-    _pending_round_messages.clear();
+  
+    RunInnerRound();
   }
   
   void NonceRound::VerifiableBroadcastToServers(const QByteArray &data)

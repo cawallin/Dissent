@@ -57,12 +57,14 @@ namespace Nonce {
       
       virtual void OnStop();
 
-     
+      void RunInnerRound();
+
       /**
        * Holds the round nested inside this round.
        */
       QSharedPointer<Round> _round;
-      QVector<Request> _pending_round_messages; 
+      QVector<Request> _pending_round_messages;
+
     private slots:
       /**
        * Called when the descriptor shuffle ends

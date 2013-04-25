@@ -11,11 +11,14 @@ namespace Nonce {
   BaseNonceRound::BaseNonceRound(const Group &group, 
       const PrivateIdentity &ident, const Id &round_id,
       QSharedPointer<Network> network, GetDataCallback &get_data) :
-    Round(group, ident, round_id, network, get_data)
+    Round(group, ident, round_id, network, get_data),
+    _pending_round_messages(0)
   {
     QVariantHash headers = GetNetwork()->GetHeaders();
     headers["nonce"] = true;
     GetNetwork()->SetHeaders(headers);
+    //_pending_round_messages = QSharedPointer<QVector<Request> >(
+    //    new QVector<Request>(0));
   }
 
   void BaseNonceRound::SetInterrupted()
@@ -71,6 +74,20 @@ namespace Nonce {
     }
   }
 
+  void BaseNonceRound::RunInnerRound()
+  {
+    Q_ASSERT(_round);
+
+    _round->Start();
+    qDebug() << "Starting inner round. Pending messages: " << 
+      _pending_round_messages.size();
+    foreach(const Request &request, _pending_round_messages){
+      _round->IncomingData(request);
+      qDebug() << "serving request!";
+    }
+    _pending_round_messages.clear();
+  }
+ 
   void BaseNonceRound::OnRoundFinished()
   {
     SetSuccessful(_round->Successful() && Successful());
