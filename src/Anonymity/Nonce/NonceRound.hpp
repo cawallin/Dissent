@@ -27,7 +27,7 @@ namespace Nonce {
         MSG_NONCE_HASH = 0,
         MSG_NONCE,
         MSG_SIG,
-        PREPARE_IR_MSG
+        S_TO_C_NONCE
       };
 
       enum States {
@@ -38,7 +38,7 @@ namespace Nonce {
         WAITING_FOR_N,
         SEND_SIG,
         WAITING_FOR_SIG,
-        PREPARE_INNER_ROUND,
+        SERVER_TO_CLIENT_NONCE_DISTRIBUTION,
         INNER_ROUND,
         FINISHED
       };

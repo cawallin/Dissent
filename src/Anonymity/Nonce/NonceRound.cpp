@@ -23,12 +23,13 @@ namespace Nonce {
   {
     _state_machine.AddState(OFFLINE);
     _state_machine.SetState(OFFLINE);
-    _state_machine.AddState(PREPARE_INNER_ROUND, PREPARE_IR_MSG, 
-        &NonceRound::PrepareInnerRound);
+    _state_machine.AddState(SERVER_TO_CLIENT_NONCE_DISTRIBUTION, 
+        S_TO_C_NONCE, &NonceRound::PrepareInnerRound);
     _state_machine.AddState(INNER_ROUND, -1, 0, &NonceRound::StartInnerRound);
     _state_machine.AddState(FINISHED, -1, 0, &NonceRound::OnFinished);
     
-    _state_machine.AddTransition(PREPARE_INNER_ROUND, INNER_ROUND);
+    _state_machine.AddTransition(SERVER_TO_CLIENT_NONCE_DISTRIBUTION, 
+        INNER_ROUND);
     _state_machine.AddTransition(INNER_ROUND, FINISHED);
 
     _state = QSharedPointer<State>(new State(create_round, get_data, 
@@ -38,7 +39,7 @@ namespace Nonce {
       InitServer();
     }
     else {
-      _state_machine.AddTransition(OFFLINE, PREPARE_INNER_ROUND);
+      _state_machine.AddTransition(OFFLINE, SERVER_TO_CLIENT_NONCE_DISTRIBUTION);
     }
   }
 
@@ -81,7 +82,8 @@ namespace Nonce {
     _state_machine.AddTransition(SEND_N, WAITING_FOR_N);
     _state_machine.AddTransition(WAITING_FOR_N, SEND_SIG);
     _state_machine.AddTransition(SEND_SIG, WAITING_FOR_SIG);
-    _state_machine.AddTransition(WAITING_FOR_SIG, PREPARE_INNER_ROUND);
+    _state_machine.AddTransition(WAITING_FOR_SIG, 
+         SERVER_TO_CLIENT_NONCE_DISTRIBUTION);
   }
 
   void NonceRound::GenerateMyContrib()
@@ -237,7 +239,7 @@ namespace Nonce {
       
       QByteArray payload;
       QDataStream stream(&payload, QIODevice::WriteOnly);
-      stream << PREPARE_IR_MSG << GetRoundId()  << _state->complete_nonce <<
+      stream << S_TO_C_NONCE << GetRoundId()  << _state->complete_nonce <<
           _state->signatures;
       
       VerifiableBroadcast(payload);

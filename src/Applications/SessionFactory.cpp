@@ -5,7 +5,7 @@
 #include "Anonymity/RepeatingBulkRound.hpp"
 #include "Anonymity/NeffKeyShuffleRound.hpp"
 #include "Anonymity/NeffShuffleRound.hpp"
-#include "Anonymity/Nonce/NullNonceRound.hpp"
+#include "Anonymity/Nonce/NonceRound.hpp"
 #include "Anonymity/NullRound.hpp"
 #include "Anonymity/Round.hpp"
 #include "Anonymity/Sessions/Session.hpp"
@@ -48,23 +48,23 @@ namespace Applications {
     CreateRound cr;
     switch(type) {
       case NULL_ROUND:
-        cr = &TCreateNonceRound<NullNonceRound, NullRound>;
+        cr = &TCreateNonceRound<NonceRound, NullRound>;
         break;
       case SHUFFLE:
-        cr = &TCreateNonceRound<NullNonceRound, ShuffleRound>;
+        cr = &TCreateNonceRound<NonceRound, ShuffleRound>;
         break;
       case BULK:
-        cr = &TCreateNonceRound<NullNonceRound, BulkRound>;
+        cr = &TCreateNonceRound<NonceRound, BulkRound>;
         break;
       case REPEATING_BULK:
-        cr = &TCreateNonceRound<NullNonceRound, RepeatingBulkRound>;
+        cr = &TCreateNonceRound<NonceRound, RepeatingBulkRound>;
         break;
       case CSBULK:
-        cr = &TCreateBulkNonceRound<NullNonceRound, CSBulkRound, 
+        cr = &TCreateBulkNonceRound<NonceRound, CSBulkRound, 
                 NeffKeyShuffleRound>;
         break;
       case NEFF_SHUFFLE:
-        cr = &TCreateNonceRound<NullNonceRound, NeffShuffleRound>;
+        cr = &TCreateNonceRound<NonceRound, NeffShuffleRound>;
       case BLOG_DROP_REACTIVE:
         cr = TCreateBlogDropRound<Parameters::ParameterType_CppECHashingProduction,
            NeffShuffleRound, false>;
