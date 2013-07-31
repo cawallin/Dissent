@@ -34,11 +34,11 @@ namespace Nonce {
         OFFLINE = 0,
         SEND_HASH,
         WAITING_FOR_HASHES,
-        SEND_N,
-        WAITING_FOR_N,
+        SEND_NC,
+        WAITING_FOR_NCS,
         SEND_SIG,
-        WAITING_FOR_SIG,
-        SERVER_TO_CLIENT_NONCE_DISTRIBUTION,
+        WAITING_FOR_SIGS,
+        PREPARE_INNER_ROUND, //SERVER_TO_CLIENT_NONCE_DISTRIBUTION
         INNER_ROUND,
         FINISHED
       };
@@ -126,8 +126,6 @@ namespace Nonce {
       void VerifiableBroadcast(const QByteArray &data);
 
       void GenerateMyContrib();
-
-      void Xor(QByteArray &dst, const QByteArray &t1, const QByteArray &t2);
 
       void PrepareInnerRound(const Id &id, QDataStream &stream);
       void StartInnerRound();

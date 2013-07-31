@@ -23,12 +23,12 @@ namespace Nonce {
   {
     _state_machine.AddState(OFFLINE);
     _state_machine.SetState(OFFLINE);
-    _state_machine.AddState(SERVER_TO_CLIENT_NONCE_DISTRIBUTION, 
+    _state_machine.AddState(PREPARE_INNER_ROUND, 
         S_TO_C_NONCE, &NonceRound::PrepareInnerRound);
     _state_machine.AddState(INNER_ROUND, -1, 0, &NonceRound::StartInnerRound);
     _state_machine.AddState(FINISHED, -1, 0, &NonceRound::OnFinished);
     
-    _state_machine.AddTransition(SERVER_TO_CLIENT_NONCE_DISTRIBUTION, 
+    _state_machine.AddTransition(PREPARE_INNER_ROUND, 
         INNER_ROUND);
     _state_machine.AddTransition(INNER_ROUND, FINISHED);
 
@@ -39,7 +39,7 @@ namespace Nonce {
       InitServer();
     }
     else {
-      _state_machine.AddTransition(OFFLINE, SERVER_TO_CLIENT_NONCE_DISTRIBUTION);
+      _state_machine.AddTransition(OFFLINE, PREPARE_INNER_ROUND);
     }
   }
 
@@ -71,19 +71,19 @@ namespace Nonce {
     _state_machine.AddState(SEND_HASH, -1, 0, &NonceRound::SendHash);
     _state_machine.AddState(WAITING_FOR_HASHES, MSG_NONCE_HASH, 
         &NonceRound::ReceiveHashes);
-    _state_machine.AddState(SEND_N, -1, 0, &NonceRound::SendN);
-    _state_machine.AddState(WAITING_FOR_N, MSG_NONCE, &NonceRound::ReceiveNs);
+    _state_machine.AddState(SEND_NC, -1, 0, &NonceRound::SendN);
+    _state_machine.AddState(WAITING_FOR_NCS, MSG_NONCE, &NonceRound::ReceiveNs);
     _state_machine.AddState(SEND_SIG, -1, 0, &NonceRound::SendSig);
-    _state_machine.AddState(WAITING_FOR_SIG, MSG_SIG, &NonceRound::ReceiveSig);
+    _state_machine.AddState(WAITING_FOR_SIGS, MSG_SIG, &NonceRound::ReceiveSig);
 
     _state_machine.AddTransition(OFFLINE, SEND_HASH);
     _state_machine.AddTransition(SEND_HASH, WAITING_FOR_HASHES);
-    _state_machine.AddTransition(WAITING_FOR_HASHES, SEND_N);
-    _state_machine.AddTransition(SEND_N, WAITING_FOR_N);
-    _state_machine.AddTransition(WAITING_FOR_N, SEND_SIG);
-    _state_machine.AddTransition(SEND_SIG, WAITING_FOR_SIG);
-    _state_machine.AddTransition(WAITING_FOR_SIG, 
-         SERVER_TO_CLIENT_NONCE_DISTRIBUTION);
+    _state_machine.AddTransition(WAITING_FOR_HASHES, SEND_NC);
+    _state_machine.AddTransition(SEND_NC, WAITING_FOR_NCS);
+    _state_machine.AddTransition(WAITING_FOR_NCS, SEND_SIG);
+    _state_machine.AddTransition(SEND_SIG, WAITING_FOR_SIGS);
+    _state_machine.AddTransition(WAITING_FOR_SIGS, 
+         PREPARE_INNER_ROUND);
   }
 
   void NonceRound::GenerateMyContrib()
@@ -178,15 +178,17 @@ namespace Nonce {
     _state->receivedN[idx] = data;
     _state->n_msgs++;
 
-    Xor(_state->complete_nonce, data, _state->complete_nonce);
-    
-    qDebug() << "Complete nonce: " << _state->complete_nonce << "data: " << data;
+//TODO: do the putting together thing, not XOR. xor = totally not 
+//secure!
+    Hash().Update(data);
 
     qDebug() << GetLocalId().ToString() << "received" << _state->n_msgs << "expecting" << GetGroup().GetSubgroup().Count();
 
     if(_state->n_msgs != GetGroup().GetSubgroup().Count()) {
       return;
     }
+
+    _state->complete_nonce = Hash().ComputeHash();
 
     qDebug() << "Complete nonce: " << _state->complete_nonce;
 
@@ -331,17 +333,6 @@ namespace Nonce {
     }
   }
   
-  void NonceRound::Xor(QByteArray &dst, const QByteArray &t1,
-      const QByteArray &t2)
-  {
-    /// @todo use qint64 or qint32 depending on architecture
-    int count = std::min(dst.size(), t1.size());
-    count = std::min(count, t2.size());
-
-    for(int idx = 0; idx < count; idx++) {
-      dst[idx] = t1[idx] ^ t2[idx];
-    }
-  }
 }
 }
 }
