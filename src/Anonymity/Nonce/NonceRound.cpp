@@ -178,8 +178,6 @@ namespace Nonce {
     _state->receivedN[idx] = data;
     _state->n_msgs++;
 
-//TODO: do the putting together thing, not XOR. xor = totally not 
-//secure!
     Hash().Update(data);
 
     qDebug() << GetLocalId().ToString() << "received" << _state->n_msgs << "expecting" << GetGroup().GetSubgroup().Count();

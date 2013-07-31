@@ -17,8 +17,6 @@ namespace Nonce {
     QVariantHash headers = GetNetwork()->GetHeaders();
     headers["nonce"] = true;
     GetNetwork()->SetHeaders(headers);
-    //_pending_round_messages = QSharedPointer<QVector<Request> >(
-    //    new QVector<Request>(0));
   }
 
   void BaseNonceRound::SetInterrupted()
